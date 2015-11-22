@@ -2,6 +2,7 @@
 #define BLYNK_PRINT Serial    // Comment this out to disable prints and save space
 #include <ESP8266_HardSer.h>
 #include <BlynkSimpleShieldEsp8266_HardSer.h>
+#include <SimpleTimer.h> // here is the SimpleTimer library
 
 // Set ESP8266 Serial object
 #define EspSerial Serial1
@@ -21,10 +22,12 @@ int RXLED = 17;
 
 DHT dht(DHTPIN, DHTTYPE);
 
+SimpleTimer timer; // Create a Timer object called "timer"!
+
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
-  while (!Serial){ // wait for serial port to connect. Needed for Leonardo only
+  while (!Serial && millis() < 8000){ // wait for serial port to connect. Needed for Leonardo only
     digitalWrite(RXLED, LOW);   // set the LED on
     delay(100);
     digitalWrite(RXLED, HIGH);   // set the LED off
@@ -37,23 +40,35 @@ void setup() {
 
   Blynk.begin(auth, wifi, "plop", "plopplop");
   dht.begin();
+
+  timer.setInterval(3000L, sendData);
 }
 
-int timer = 0;
+float h=0;
+float t=0;
+int ti=0;
+
+void sendData()
+{
+  Blynk.virtualWrite(V0, millis()/1000.0);
+  Blynk.virtualWrite(V1, t);
+  Serial.print("3sec\r\n");
+}
 void loop() {
   // put your main code here, to run repeatedly:
   Blynk.run();
+  timer.run();
   
   // Wait a few seconds between measurements.
-  timer++;
-  if( timer>= 200 )
+  ti++;
+  if( ti>= 200 )
   {
-    timer = 0;
+    ti = 0;
     // Reading temperature or humidity takes about 250 milliseconds!
     // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-    float h = dht.readHumidity();
+    h = dht.readHumidity();
     // Read temperature as Celsius (the default)
-    float t = dht.readTemperature();
+    t = dht.readTemperature();
     
     // Check if any reads failed and exit early (to try again).
     if (isnan(h) || isnan(t) ) {
@@ -67,7 +82,13 @@ void loop() {
       Serial.print("Temperature: ");
       Serial.print(t);
       Serial.println(" *C ");
-      Blynk.virtualWrite(V1, t);
     }
+  }
+
+  //Check connection status
+  if ( !Blynk.connected() )
+  {
+    Serial.println("Retry connect");
+    Blynk.connect();
   }
 }
