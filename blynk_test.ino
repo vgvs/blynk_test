@@ -11,7 +11,7 @@ ESP8266 wifi(EspSerial);
 
 // You should get Auth Token in the Blynk App.
 // Go to the Project Settings (nut icon).
-char auth[] = "c6ec3d8dac57479591deddfec6a70633";
+char auth[] = "443d3723d26f4e55a10d074752320e22";
 
 #include <DHT.h>
 
